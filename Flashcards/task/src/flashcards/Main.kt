@@ -1,6 +1,11 @@
 package flashcards
 
 import java.util.Scanner
+import flashcards.FlashCards.Action.*
+import java.io.File
+import java.io.FileNotFoundException
+import kotlin.random.Random
+import kotlin.system.exitProcess
 
 fun input(prompt: String = ""): String {
     val scanner = Scanner(System.`in`)
@@ -10,46 +15,45 @@ fun input(prompt: String = ""): String {
 }
 
 class FlashCards {
-    private var numberOfCards = 0
     private val data = mutableMapOf<Int, String>()
     private val termToDef = mutableMapOf<Int, Int>()
     private val defToTerm = mutableMapOf<Int, Int>()
 
-    data class Card(val term: Int, val definition: Int)
+    data class Card(val term: Int = 0, val definition: Int = 0)
 
-    private val cards = mutableListOf<Card>()
+    enum class Action {
+        ADD, REMOVE, IMPORT, EXPORT, ASK, EXIT, NONE;
+    }
 
-    private fun readTerm(cardNumber: Int): String {
-        var term = ""
-        var isRepeatedTerm = false
-        println("Card #${cardNumber + 1}:")
-        while (!isRepeatedTerm) {
-            term = input()
-            if (data.getOrDefault(term.hashCode(), "") == "") {
-                isRepeatedTerm = true
-            } else
-                println("The term \"${term}\" already exists. Try again: ")
+    private fun readTerm(): String {
+        println("The card:")
+        var term: String = input()
+        if (data.getOrDefault(term.hashCode(), "") != "") {
+            println("The card \"${term}\" already exists.")
+            term = ""
         }
         return term
     }
 
-    private fun readDefinition(cardNumber: Int): String {
+    private fun readDefinition(): String {
         var definition = ""
-        var isRepeatedTerm = false
-        println("The definition for card #${cardNumber + 1}:")
-        while (!isRepeatedTerm) {
-            definition = input()
-            if (data.getOrDefault(definition.hashCode(), "") == "") {
-                isRepeatedTerm = true
-            } else
-                println("The definition \"${definition}\" already exists. Try again:")
+        println("The definition of the card:")
+        definition = input()
+        if (data.getOrDefault(definition.hashCode(), "") != "") {
+            println("The definition \"${definition}\" already exists. Try again:")
+            definition = ""
         }
         return definition
     }
 
-    private fun getOneCard(cardNumber: Int) {
-        val theTerm = readTerm(cardNumber)
-        val theDefinition = readDefinition(cardNumber)
+    private fun getOneCard(): Card {
+        val theTerm = readTerm()
+        if (theTerm == "")
+            return Card()
+
+        val theDefinition = readDefinition()
+        if (theDefinition == "")
+            return Card()
 
         val termHashCode = theTerm.hashCode()
         val defHashCode = theDefinition.hashCode()
@@ -58,24 +62,12 @@ class FlashCards {
         termToDef[termHashCode] = defHashCode
         defToTerm[defHashCode] = termHashCode
 
-         cards.add(Card(termHashCode, defHashCode))
+        return Card(termHashCode, defHashCode)
     }
 
-    fun getCards() {
-        numberOfCards = input("Input the number of cards:\n").toInt()
+    private fun getDefByTerm(term: Int): Int? = termToDef[term]
 
-        repeat(numberOfCards) {
-            getOneCard(it)
-        }
-    }
-
-    fun getDefByTerm(term: Int): Int? {
-        return termToDef[term]
-    }
-
-    fun getTermByDef(def: Int): Int? {
-        return defToTerm[def]
-    }
+    private fun getTermByDef(def: Int): Int? = defToTerm[def]
 
     private fun oneCardQuiz(card: Card) {
 
@@ -86,7 +78,7 @@ class FlashCards {
 
         when {
             userDefHashCode == getDefByTerm(card.term) -> println("Correct!")
-            getTermByDef(userDefHashCode)  != null -> {
+            getTermByDef(userDefHashCode) != null -> {
                 val correctTerm = data[defToTerm[answer.hashCode()]]
                 println(
                     "Wrong. The right answer is \"${defText}\", " +
@@ -98,14 +90,94 @@ class FlashCards {
         }
     }
 
-    fun allCardsQuiz() {
-        for (card in cards)
+    private fun add() {
+        val card = getOneCard()
+        if (card == Card()) return
+        println("The pair (\"${data[card.term]}\":\"${data[card.definition]}\") has been added.")
+    }
+
+    private fun remove() {
+        val term = input("Which card?\n")
+        val termHash = term.hashCode()
+        if (termHash in data) {
+            val def = termToDef[termHash]
+            termToDef.remove(termHash)
+            defToTerm.remove(def)
+            data.remove(term.hashCode())
+            data.remove(def.hashCode())
+            println("The card has been removed.")
+        } else
+            println("Can't remove \"${term}\": there is no such card.")
+    }
+
+    private fun import() {
+        var count = 0
+        try {
+            val file = File(input("File name:\n"))
+            file.forEachLine {
+                if (it.isNotBlank()) {
+                    val (term, def) = it.split(", ")
+                    termToDef[term.hashCode()] = def.hashCode()
+                    defToTerm[def.hashCode()] = term.hashCode()
+                    data[term.hashCode()] = term
+                    data[def.hashCode()] = def
+
+                    count++
+                }
+            }
+            println("${count} cards have been loaded.")
+
+        } catch (e: FileNotFoundException) {
+            println("File not found.")
+        }
+    }
+
+    private fun export() {
+        var count = 0
+        val file = File(input("File name:\n"))
+        file.writeText("")
+        for ((term, def) in termToDef.entries) {
+            val termText = data[term]
+            val defText = data[def]
+            file.appendText("${termText}, ${defText}\n")
+            count++
+        }
+        println("${count} cards have been saved.")
+    }
+
+    private fun ask() {
+        val times = input("How many times to ask?\n").toInt()
+        repeat(times) {
+            val entry = termToDef.entries.elementAt(Random.nextInt(termToDef.size))
+            val card = Card(entry.key, entry.value)
             oneCardQuiz(card)
+        }
+    }
+
+    fun menu() {
+        var action = NONE
+        while (action != EXIT) {
+            val c = input("\nInput the action (add, remove, import, export, ask, exit):\n")
+            action = valueOf(c.toUpperCase())
+            when (action) {
+                ADD -> add()
+                REMOVE -> remove()
+                IMPORT -> import()
+                EXPORT -> export()
+                ASK -> ask()
+                EXIT -> {
+                    println("Bye Bye!")
+                    exitProcess(0)
+                }
+                NONE -> {
+                }
+            }
+        }
     }
 }
 
 fun main() {
     val flashCards = FlashCards()
-    flashCards.getCards()
-    flashCards.allCardsQuiz()
+
+    flashCards.menu()
 }

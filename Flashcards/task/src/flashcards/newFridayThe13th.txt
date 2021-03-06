@@ -1,0 +1,5 @@
+Libia:Tripoli:0
+France:Paris:0
+Great Britain:London:0
+Russia:Moscow:0
+Egypt:Cairo:0

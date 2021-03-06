@@ -39,7 +39,8 @@ class IOLogger {
     }
 }
 
-class FlashCards {
+class FlashCards(private val importFile: String = "", private val exportFile: String = "") {
+
     private val log = IOLogger()
 
     data class Card(
@@ -51,6 +52,9 @@ class FlashCards {
     private val termToDef = linkedMapOf<Int, Card>()
     private val defToTerm = linkedMapOf<Int, Card>()
 
+    init {
+        if (importFile.isNotBlank()) import()
+    }
 
     enum class Action {
         ADD, REMOVE, IMPORT, EXPORT, ASK, EXIT, LOG, HARDEST, RESET, NONE;
@@ -146,8 +150,12 @@ class FlashCards {
 
     private fun import() {
         var count = 0
+        val file: File
         try {
-            val file = File(log.input("File name:\n"))
+            file = if (importFile.isBlank())
+                File(log.input("File name:\n"))
+            else
+                File(importFile)
             file.forEachLine {
                 if (it.isNotBlank()) {
                     val (term, def, mistake) = it.split(":")
@@ -167,7 +175,10 @@ class FlashCards {
 
     private fun export() {
         var count = 0
-        val file = File(log.input("File name:\n"))
+        val file: File = if (exportFile.isBlank())
+            File(log.input("File name:\n"))
+        else
+            File(exportFile)
         file.writeText("")
         for ((_, card) in termToDef.entries) {
             val termText = card.term
@@ -240,6 +251,7 @@ class FlashCards {
                     EXPORT -> export()
                     ASK -> ask()
                     EXIT -> {
+                        if (exportFile.isNotBlank()) export()
                         log.println("Bye Bye!")
                         exitProcess(0)
                     }
@@ -255,8 +267,15 @@ class FlashCards {
     }
 }
 
-fun main() {
-    val flashCards = FlashCards()
+fun main(args: Array<String>) {
+    val parsed = mutableMapOf<String, String>()
+    for (i in 0..args.lastIndex step 2) {
+        parsed[args[i]] = args[i + 1]
+    }
 
+    val importFile = parsed.getOrDefault("-import", "")
+    val exportFile = parsed.getOrDefault("-export", "")
+
+    val flashCards = FlashCards(importFile, exportFile)
     flashCards.menu()
 }

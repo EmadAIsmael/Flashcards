@@ -1,0 +1,71 @@
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+add
+The card:
+France
+The definition of the card:
+Paris
+The pair ("France":"Paris") has been added.
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+add
+The card:
+Egypt
+The definition of the card:
+Cairo
+The pair ("Egypt":"Cairo") has been added.
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+add
+The card:
+Great Britain
+The definition of the card:
+London
+The pair ("Great Britain":"London") has been added.
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+add
+The card:
+China
+The definition of the card:
+Beijin
+The pair ("China":"Beijin") has been added.
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+add
+The card:
+Russia
+The definition of the card:
+Moscow
+The pair ("Russia":"Moscow") has been added.
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+ask
+How many times to ask?
+7
+Print the definition of "France":
+Paris
+Correct!
+Print the definition of "China":
+???
+Wrong. The right answer is "Beijin".
+Print the definition of "China":
+Paris
+Wrong. The right answer is "Beijin", but your definition is correct for "France".
+Print the definition of "China":
+Paris
+Wrong. The right answer is "Beijin", but your definition is correct for "France".
+Print the definition of "Egypt":
+???
+Wrong. The right answer is "Cairo".
+Print the definition of "France":
+London
+Wrong. The right answer is "Paris", but your definition is correct for "Great Britain".
+Print the definition of "Egypt":
+Paris
+Wrong. The right answer is "Cairo", but your definition is correct for "France".
+
+Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):
+log
+File name:
+sessionLog.txt
